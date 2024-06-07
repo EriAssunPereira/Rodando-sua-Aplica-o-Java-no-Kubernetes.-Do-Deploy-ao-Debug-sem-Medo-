@@ -1,4 +1,4 @@
-**Projeto: Rodando sua Aplicação Java no Kubernetes. Do Deploy ao Debug sem Medo!**
+## Projeto: Rodando sua Aplicação Java no Kubernetes. Do Deploy ao Debug sem Medo!
 
 Para criar um projeto de **Kubernetes** que permita rodar uma aplicação Java com a capacidade de fazer deploy e debug sem medo, você pode seguir os seguintes passos, organizados em módulos:
 
@@ -38,3 +38,93 @@ Este projeto tem como objetivo ensinar como configurar e gerenciar um ambiente K
 
 **Resultado Esperado**:
 Ao final do projeto, você terá uma aplicação Java rodando em um cluster Kubernetes local com a capacidade de fazer deploy e debug de forma eficiente e segura.
+
+Aqui estão exemplos de código para cada módulo do projeto Kubernetes com uma aplicação Java:
+
+### Módulo 1: Preparação do Ambiente Local
+```bash
+# Instalação do Minikube
+minikube start
+
+# Instalação do kubectl
+curl -LO "https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl"
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+```
+
+### Módulo 2: Criação da Aplicação Java
+```Dockerfile
+# Dockerfile
+FROM openjdk:8-jdk-alpine
+VOLUME /tmp
+ADD target/spring-boot-app.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+### Módulo 3: Configuração do Kubernetes
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: java-app
+  template:
+    metadata:
+      labels:
+        app: java-app
+    spec:
+      containers:
+      - name: java-app
+        image: java-app:latest
+        ports:
+        - containerPort: 8080
+
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-app-service
+spec:
+  type: NodePort
+  selector:
+    app: java-app
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+```
+
+### Módulo 4: Deploy da Aplicação
+```bash
+# Deploy no Minikube
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+
+# Verificação
+minikube service java-app-service
+```
+
+### Módulo 5: Debugging
+```bash
+# Configuração de Debug no IntelliJ IDEA
+# 1. Adicione a configuração de Remote JVM Debug no IntelliJ.
+# 2. Conecte-se ao pod do Kubernetes usando o kubectl port-forward.
+kubectl port-forward <nome-do-pod> 5005:5005
+```
+
+### Módulo 6: Monitoramento e Logs
+```bash
+# Monitoramento com Prometheus
+# Instale o Prometheus no seu cluster Kubernetes usando Helm
+helm install stable/prometheus
+
+# Logs
+kubectl logs <nome-do-pod>
+```
+
+Esses são exemplos básicos para começar com cada módulo. Lembre-se de ajustar os comandos e códigos conforme necessário para o seu ambiente específico e a configuração da sua aplicação.
